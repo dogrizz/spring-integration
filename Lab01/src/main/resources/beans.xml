@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:integration="http://www.springframework.org/schema/integration"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
+
+    <bean id="dateTimeService" class="pl.training.integration.lab01.DateTimeService"/>
+
+    <integration:channel id="messages"/>
+
+    <integration:service-activator input-channel="messages" ref="dateTimeService" method="print"/>
+
+    <integration:gateway id="dateTimeGateway" service-interface="pl.training.integration.lab01.DateTime" default-request-channel="messages"/>
+
+</beans>
