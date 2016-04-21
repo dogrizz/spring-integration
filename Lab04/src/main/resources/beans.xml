@@ -71,7 +71,6 @@
     <integration:wire-tap channel="logs" pattern="*"/>
     <integration:logging-channel-adapter id="logs" level="INFO" log-full-message="true"/>
 
-
     <integration:inbound-channel-adapter channel="request" expression="''">
         <integration:poller fixed-rate="3000"/>
     </integration:inbound-channel-adapter>

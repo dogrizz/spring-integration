@@ -5,7 +5,8 @@
        xmlns:http="http://www.springframework.org/schema/integration/http"
        xmlns:stream="http://www.springframework.org/schema/integration/stream"
        xmlns:int-xml="http://www.springframework.org/schema/integration/xml"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd">
+       xmlns:jms="http://www.springframework.org/schema/integration/jms"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/integration/xml http://www.springframework.org/schema/integration/xml/spring-integration-xml.xsd http://www.springframework.org/schema/integration/jms http://www.springframework.org/schema/integration/jms/spring-integration-jms.xsd">
 
     <bean id="unmarshaller" class="org.springframework.oxm.jaxb.Jaxb2Marshaller">
         <property name="classesToBeBound">
@@ -16,6 +17,8 @@
         </property>
     </bean>
 
+    <bean id="idGenerator" class="pl.training.integration.lab05.IdGenerator"/>
+
     <integration:gateway id="nbp" service-interface="pl.training.integration.lab05.NBPGateway" default-request-channel="request"/>
 
     <integration:channel id="request"/>
@@ -25,11 +28,58 @@
 
     <integration:channel id="response"/>
 
-    <integration:chain input-channel="response">
+    <integration:chain input-channel="response" output-channel="entries">
         <integration:transformer expression="payload.replaceAll(',', '.')"/>
         <int-xml:unmarshalling-transformer unmarshaller="unmarshaller"/>
         <integration:splitter expression="payload.entryList"/>
-        <stream:stdout-channel-adapter append-newline="true"/>
+        <integration:header-enricher>
+            <integration:header name="entryId" ref="idGenerator" method="getNext"/>
+        </integration:header-enricher>
+        <integration:enricher>
+            <integration:property name="id" expression="headers.entryId"/>
+        </integration:enricher>
     </integration:chain>
 
+    <integration:channel id="entries"/>
+
+    <integration:recipient-list-router input-channel="entries">
+        <integration:recipient channel="entriesToPrint"/>
+        <integration:recipient channel="entriesToSend"/>
+    </integration:recipient-list-router>
+
+    <integration:channel id="entriesToPrint"/>
+    <integration:channel id="entriesToSend"/>
+
+    <stream:stdout-channel-adapter append-newline="true" channel="entriesToPrint"/>
+
+    <integration:wire-tap channel="logs" pattern="*"/>
+    <integration:logging-channel-adapter id="logs" level="INFO" log-full-message="true"/>
+
+    <bean id="jmsConnectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory">
+            <bean class="org.apache.activemq.ActiveMQConnectionFactory">
+                <property name="brokerURL" value="tcp://localhost:61616"/>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="trainingQueue" class="org.apache.activemq.command.ActiveMQQueue">
+        <property name="physicalName" value="training"/>
+    </bean>
+
+    <jms:outbound-channel-adapter channel="entriesToSend" destination="trainingQueue"
+                                  connection-factory="jmsConnectionFactory"/>
+
 </beans>
+
+
+
+
+
+
+
+
+
+
+
+
