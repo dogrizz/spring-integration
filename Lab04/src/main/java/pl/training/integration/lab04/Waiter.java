@@ -1,6 +1,6 @@
-package p.training.integration.lab04;
+package pl.training.integration.lab04;
 
-import p.training.integration.lab04.order.Coffee;
+import pl.training.integration.lab04.order.Coffee;
 
 import java.util.List;
 

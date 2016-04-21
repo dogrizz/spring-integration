@@ -1,10 +1,10 @@
-package p.training.integration.lab04;
+package pl.training.integration.lab04;
 
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import p.training.integration.lab04.order.Coffee;
-import p.training.integration.lab04.order.CoffeeType;
-import p.training.integration.lab04.order.Order;
-import p.training.integration.lab04.order.OrderItem;
+import pl.training.integration.lab04.order.Coffee;
+import pl.training.integration.lab04.order.CoffeeType;
+import pl.training.integration.lab04.order.Order;
+import pl.training.integration.lab04.order.OrderItem;
 
 import java.util.ArrayList;
 import java.util.List;

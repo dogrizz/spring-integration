@@ -1,4 +1,4 @@
-package p.training.integration.lab04.order;
+package pl.training.integration.lab04.order;
 
 import java.util.ArrayList;
 import java.util.List;

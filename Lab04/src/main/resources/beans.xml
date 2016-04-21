@@ -5,11 +5,12 @@
        xmlns:stream="http://www.springframework.org/schema/integration/stream"
        xmlns:jdbc="http://www.springframework.org/schema/jdbc"
        xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd">
+       xmlns:http="http://www.springframework.org/schema/integration/http"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd">
 
-    <bean id="mietek" class="p.training.integration.lab04.Barista"/>
-    <bean id="zenek" class="p.training.integration.lab04.Barista"/>
-    <bean id="henio" class="p.training.integration.lab04.Waiter"/>
+    <bean id="mietek" class="pl.training.integration.lab04.Barista"/>
+    <bean id="zenek" class="pl.training.integration.lab04.Barista"/>
+    <bean id="henio" class="pl.training.integration.lab04.Waiter"/>
 
     <jdbc:embedded-database id="dataSource" type="H2">
         <jdbc:script location="import.sql"/>
@@ -31,7 +32,7 @@
 
 
 
-    <integration:gateway id="cafe" service-interface="p.training.integration.lab04.CafeSpring"
+    <integration:gateway id="cafe" service-interface="pl.training.integration.lab04.CafeSpring"
                          default-request-channel="placedOrders"/>
 
     <integration:channel id="placedOrders"/>
@@ -69,5 +70,22 @@
 
     <integration:wire-tap channel="logs" pattern="*"/>
     <integration:logging-channel-adapter id="logs" level="INFO" log-full-message="true"/>
+
+
+    <integration:inbound-channel-adapter channel="request" expression="''">
+        <integration:poller fixed-rate="3000"/>
+    </integration:inbound-channel-adapter>
+
+    <integration:channel id="request"/>
+
+    <http:outbound-gateway request-channel="request" reply-channel="response"
+            url="http://localhost:8080/api/orders" http-method="GET"
+            expected-response-type="java.lang.String"/>
+
+    <integration:channel id="response"/>
+
+    <integration:json-to-object-transformer input-channel="response"
+                                            type="pl.training.integration.lab04.order.Order"
+                                            output-channel="placedOrders"/>
 
 </beans>
