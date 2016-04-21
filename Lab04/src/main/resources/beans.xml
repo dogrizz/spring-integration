@@ -2,10 +2,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:integration="http://www.springframework.org/schema/integration"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
+       xmlns:stream="http://www.springframework.org/schema/integration/stream"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd">
 
     <bean id="mietek" class="p.training.integration.lab04.Barista"/>
     <bean id="zenek" class="p.training.integration.lab04.Barista"/>
+    <bean id="henio" class="p.training.integration.lab04.Waiter"/>
 
     <integration:gateway id="cafe" service-interface="p.training.integration.lab04.CafeSpring"
                          default-request-channel="placedOrders"/>
@@ -15,5 +17,26 @@
     <integration:splitter input-channel="placedOrders" expression="payload.orderItems" output-channel="items"/>
 
     <integration:channel id="items"/>
+
+    <integration:router input-channel="items" expression="payload.coffee.iced ? 'icedItems' : 'hotItems'"/>
+
+    <integration:channel id="hotItems"/>
+
+    <integration:channel id="icedItems"/>
+
+    <integration:channel id="preparedItems"/>
+
+    <integration:service-activator input-channel="hotItems" output-channel="preparedItems" ref="mietek" method="prepare"/>
+
+    <integration:service-activator input-channel="icedItems" output-channel="preparedItems" ref="zenek" method="prepare"/>
+
+    <integration:aggregator input-channel="preparedItems" ref="henio" method="serve" output-channel="delivery"/>
+
+    <integration:channel id="delivery"/>
+
+    <stream:stdout-channel-adapter channel="delivery"/>
+
+    <integration:wire-tap channel="logs" pattern="*"/>
+    <integration:logging-channel-adapter id="logs" level="DEBUG" log-full-message="true"/>
 
 </beans>

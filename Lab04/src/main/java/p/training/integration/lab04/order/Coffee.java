@@ -13,6 +13,10 @@ public class Coffee {
         this.iced = iced;
     }
 
+    public boolean isIced() {
+        return iced;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

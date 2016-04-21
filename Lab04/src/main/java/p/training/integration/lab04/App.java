@@ -23,7 +23,7 @@ public class App {
             CafeSpring cafeSpring = applicationContext.getBean("cafe", CafeSpring.class);
             cafeSpring.placeOrder(new Order(orderItems));
 
-            Thread.sleep(20000);
+            Thread.sleep(200000);
         }
     }
 
