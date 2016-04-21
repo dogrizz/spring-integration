@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:file="http://www.springframework.org/schema/integration/file"
+       xmlns:integration="http://www.springframework.org/schema/integration"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd">
+
+    <bean id="fileSelector" class="pl.training.integration.lab03.ShipOrderFileSelector"/>
+
+    <file:inbound-channel-adapter directory="file:/Users/landrzejewski/Desktop/inbound" channel="files">
+        <integration:poller fixed-rate="5000"/>
+    </file:inbound-channel-adapter>
+
+    <integration:filter input-channel="files" output-channel="shipOrderFiles" ref="fileSelector"/>
+
+    <file:outbound-channel-adapter directory="file:/Users/landrzejewski/Desktop/outbound" channel="shipOrderFiles"/>
+
+    <integration:channel id="files"/>
+
+    <integration:channel id="shipOrderFiles"/>
+
+</beans>
