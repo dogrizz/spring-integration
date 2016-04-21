@@ -59,6 +59,7 @@
         <property name="targetConnectionFactory">
             <bean class="org.apache.activemq.ActiveMQConnectionFactory">
                 <property name="brokerURL" value="tcp://localhost:61616"/>
+                <property name="trustAllPackages" value="true"/>
             </bean>
         </property>
     </bean>
@@ -67,8 +68,18 @@
         <property name="physicalName" value="training"/>
     </bean>
 
-    <jms:outbound-channel-adapter channel="entriesToSend" destination="trainingQueue"
-                                  connection-factory="jmsConnectionFactory"/>
+    <jms:outbound-channel-adapter channel="entriesToSend" destination="trainingQueue" connection-factory="jmsConnectionFactory"/>
+
+    <integration:poller default="true" fixed-rate="500"/>
+
+    <jms:inbound-channel-adapter channel="jmsMessages" destination="trainingQueue" connection-factory="jmsConnectionFactory"/>
+
+    <integration:channel id="jmsMessages"/>
+
+    <integration:chain input-channel="jmsMessages">
+        <integration:transformer expression="'####### Message: ' + payload.code"/>
+        <stream:stdout-channel-adapter append-newline="true"/>
+    </integration:chain>
 
 </beans>
 
