@@ -3,11 +3,33 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:integration="http://www.springframework.org/schema/integration"
        xmlns:stream="http://www.springframework.org/schema/integration/stream"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd">
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd http://www.springframework.org/schema/integration/jdbc http://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd">
 
     <bean id="mietek" class="p.training.integration.lab04.Barista"/>
     <bean id="zenek" class="p.training.integration.lab04.Barista"/>
     <bean id="henio" class="p.training.integration.lab04.Waiter"/>
+
+    <jdbc:embedded-database id="dataSource" type="H2">
+        <jdbc:script location="import.sql"/>
+    </jdbc:embedded-database>
+
+    <integration:chain input-channel="itemsToStore">
+        <integration:transformer expression="payload.coffee"/>
+        <integration:object-to-map-transformer/>
+        <int-jdbc:outbound-channel-adapter data-source="dataSource" query="insert into items (coffeeType) values(:payload[coffeeType])"/>
+    </integration:chain>
+
+    <int-jdbc:inbound-channel-adapter data-source="dataSource" query="select * from items" channel="selectedItems">
+        <integration:poller fixed-rate="10000"/>
+    </int-jdbc:inbound-channel-adapter>
+
+    <integration:channel id="selectedItems"/>
+
+    <stream:stdout-channel-adapter channel="selectedItems" append-newline="true"/>
+
+
 
     <integration:gateway id="cafe" service-interface="p.training.integration.lab04.CafeSpring"
                          default-request-channel="placedOrders"/>
@@ -18,7 +40,16 @@
 
     <integration:channel id="items"/>
 
-    <integration:router input-channel="items" expression="payload.coffee.iced ? 'icedItems' : 'hotItems'"/>
+    <integration:recipient-list-router input-channel="items">
+        <integration:recipient channel="itemsToProcess"/>
+        <integration:recipient channel="itemsToStore"/>
+    </integration:recipient-list-router>
+
+    <integration:channel id="itemsToProcess"/>
+
+    <integration:channel id="itemsToStore"/>
+
+    <integration:router input-channel="itemsToProcess" expression="payload.coffee.iced ? 'icedItems' : 'hotItems'"/>
 
     <integration:channel id="hotItems"/>
 
@@ -37,6 +68,6 @@
     <stream:stdout-channel-adapter channel="delivery"/>
 
     <integration:wire-tap channel="logs" pattern="*"/>
-    <integration:logging-channel-adapter id="logs" level="DEBUG" log-full-message="true"/>
+    <integration:logging-channel-adapter id="logs" level="INFO" log-full-message="true"/>
 
 </beans>

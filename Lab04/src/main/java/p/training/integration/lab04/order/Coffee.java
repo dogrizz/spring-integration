@@ -17,6 +17,10 @@ public class Coffee {
         return iced;
     }
 
+    public CoffeeType getCoffeeType() {
+        return coffeeType;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
