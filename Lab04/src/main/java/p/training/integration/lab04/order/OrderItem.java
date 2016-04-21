@@ -12,6 +12,10 @@ public class OrderItem {
         this.coffee = coffee;
     }
 
+    public Coffee getCoffee() {
+        return coffee;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

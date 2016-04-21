@@ -4,9 +4,16 @@
        xmlns:integration="http://www.springframework.org/schema/integration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
 
+    <bean id="mietek" class="p.training.integration.lab04.Barista"/>
+    <bean id="zenek" class="p.training.integration.lab04.Barista"/>
+
     <integration:gateway id="cafe" service-interface="p.training.integration.lab04.CafeSpring"
                          default-request-channel="placedOrders"/>
 
     <integration:channel id="placedOrders"/>
+
+    <integration:splitter input-channel="placedOrders" expression="payload.orderItems" output-channel="items"/>
+
+    <integration:channel id="items"/>
 
 </beans>
