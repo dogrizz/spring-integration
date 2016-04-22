@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:batch="http://www.springframework.org/schema/batch"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+       xmlns:integration="http://www.springframework.org/schema/integration"
+       xmlns:file="http://www.springframework.org/schema/integration/file"
+       xmlns:stream="http://www.springframework.org/schema/integration/stream"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd http://www.springframework.org/schema/integration/file http://www.springframework.org/schema/integration/file/spring-integration-file.xsd http://www.springframework.org/schema/integration/stream http://www.springframework.org/schema/integration/stream/spring-integration-stream.xsd">
 
     <bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean"/>
 
@@ -17,6 +20,9 @@
                 <batch:chunk reader="csvReader" processor="itemProcessor" writer="xmlWriter" commit-interval="2"/>
             </batch:tasklet>
         </batch:step>
+        <batch:listeners>
+            <batch:listener ref="executionListener"/>
+        </batch:listeners>
     </batch:job>
 
     <bean id="csvReader" class="org.springframework.batch.item.file.FlatFileItemReader">
@@ -50,5 +56,34 @@
         <property name="marshaller" ref="jaxbMarshaller"/>
         <property name="rootTagName" value="reports"/>
     </bean>
+
+
+    <integration:channel id="files"/>
+
+    <file:inbound-channel-adapter directory="/Users/landrzejewski/Desktop/inbound" channel="files">
+        <integration:poller fixed-rate="5000"/>
+    </file:inbound-channel-adapter>
+
+    <integration:chain input-channel="files">
+        <integration:transformer ref="fileMessageToJobRequestTransformer" method="transform"/>
+        <integration:service-activator ref="launcher" method="launch"/>
+        <stream:stdout-channel-adapter append-newline="true"/>
+    </integration:chain>
+
+    <bean id="fileMessageToJobRequestTransformer" class="pl.training.integration.lab06.FileMessageToJobRequest">
+        <property name="job" ref="orders"/>
+    </bean>
+
+    <bean id="launcher" class="org.springframework.batch.integration.launch.JobLaunchingMessageHandler">
+        <constructor-arg name="jobLauncher" ref="jobLauncher"/>
+    </bean>
+
+    <integration:gateway id="executionListener"
+                         service-interface="org.springframework.batch.core.JobExecutionListener"
+                         default-request-channel="executions"/>
+
+    <integration:channel id="executions"/>
+
+    <stream:stdout-channel-adapter channel="executions" append-newline="true"/>
 
 </beans>

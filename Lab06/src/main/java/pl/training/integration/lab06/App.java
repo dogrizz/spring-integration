@@ -14,10 +14,11 @@ public class App {
 
     public static void main(String[] args) throws InterruptedException, JobParametersInvalidException, JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException {
         try (ClassPathXmlApplicationContext applicationContext = new ClassPathXmlApplicationContext("beans.xml")) {
-            JobLauncher jobLauncher = applicationContext.getBean(JobLauncher.class);
+            /*JobLauncher jobLauncher = applicationContext.getBean(JobLauncher.class);
             Job orders = applicationContext.getBean("orders", Job.class);
             JobExecution execution = jobLauncher.run(orders, new JobParameters());
-            System.out.println(execution.getStatus());
+            System.out.println(execution.getStatus());*/
+            Thread.sleep(20000);
         }
     }
 
